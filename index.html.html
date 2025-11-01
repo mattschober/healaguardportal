@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DR Portal - Replication Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #10b981;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-badge.warning {
+            background: #f59e0b;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .stat-card .subtext {
+            color: #10b981;
+            font-size: 13px;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .cloud-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .cloud-header {
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .cloud-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 20px;
+        }
+
+        .aws { background: #ff9900; color: white; }
+        .azure { background: #0078d4; color: white; }
+        .gcp { background: #4285f4; color: white; }
+
+        .cloud-header h2 {
+            color: #2d3748;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .cloud-header .count {
+            margin-left: auto;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .assets-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .assets-table thead {
+            background: #f9fafb;
+        }
+
+        .assets-table th {
+            padding: 15px 30px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .assets-table td {
+            padding: 18px 30px;
+            border-top: 1px solid #f3f4f6;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        .assets-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .asset-name {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #4f46e5;
+        }
+
+        .status-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #10b981;
+            color: white;
+            font-size: 14px;
+        }
+
+        .status-icon.warning {
+            background: #f59e0b;
+        }
+
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #10b981;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.warning {
+            background: #f59e0b;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e0e7ff;
+            color: #4f46e5;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag.production {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .tag.development {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .last-sync {
+            color: #6b7280;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Disaster Recovery Portal</h1>
+            <div class="header-info">
+                <div class="status-badge">
+                    <span>●</span>
+                    <span>All Systems Operational</span>
+                </div>
+                <div class="last-sync">Last Updated: 2 minutes ago</div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Assets</h3>
+                <div class="value">24</div>
+                <div class="subtext">✓ All replicating</div>
+            </div>
+            <div class="stat-card">
+                <h3>Cloud Providers</h3>
+                <div class="value">3</div>
+                <div class="subtext">AWS, Azure, GCP</div>
+            </div>
+            <div class="stat-card">
+                <h3>Replication Health</h3>
+                <div class="value">100%</div>
+                <div class="subtext">✓ All targets synced</div>
+            </div>
+            <div class="stat-card">
+                <h3>RPO Status</h3>
+                <div class="value">&lt;5m</div>
+                <div class="subtext">Within SLA limits</div>
+            </div>
+        </div>
+
+        <!-- AWS Section -->
+        <div class="cloud-section">
+            <div class="cloud-header">
+                <div class="cloud-icon aws">AWS</div>
+                <h2>Amazon Web Services</h2>
+                <span class="count">9 assets replicating</span>
+            </div>
+            <table class="assets-table">
+                <thead>
+                    <tr>
+                        <th>Asset Name</th>
+                        <th>Instance Type</th>
+                        <th>Environment</th>
+                        <th>Status</th>
+                        <th>Replication Progress</th>
+                        <th>Last Sync</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="asset-name">prd-web-srv-01</span></td>
+                        <td>t3.large</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>2 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">prd-app-srv-02</span></td>
+                        <td>m5.xlarge</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">prd-db-srv-01</span></td>
+                        <td>r5.2xlarge</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>3 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">prd-cache-srv-01</span></td>
+                        <td>r5.large</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">dev-api-srv-01</span></td>
+                        <td>t3.medium</td>
+                        <td><span class="tag development">Development</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>4 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">prd-auth-srv-01</span></td>
+                        <td>t3.large</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>2 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">prd-queue-srv-01</span></td>
+                        <td>m5.large</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>3 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">stg-web-srv-01</span></td>
+                        <td>t3.medium</td>
+                        <td><span class="tag">Staging</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>5 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">prd-monitor-srv-01</span></td>
+                        <td>t3.small</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Azure Section -->
+        <div class="cloud-section">
+            <div class="cloud-header">
+                <div class="cloud-icon azure">⊞</div>
+                <h2>Microsoft Azure</h2>
+                <span class="count">8 assets replicating</span>
+            </div>
+            <table class="assets-table">
+                <thead>
+                    <tr>
+                        <th>Asset Name</th>
+                        <th>VM Size</th>
+                        <th>Environment</th>
+                        <th>Status</th>
+                        <th>Replication Progress</th>
+                        <th>Last Sync</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="asset-name">azr-prd-web-vm-01</span></td>
+                        <td>Standard_D4s_v3</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>2 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">azr-prd-app-vm-01</span></td>
+                        <td>Standard_E8s_v3</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>3 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">azr-prd-sql-vm-01</span></td>
+                        <td>Standard_E16s_v3</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">azr-prd-storage-vm-01</span></td>
+                        <td>Standard_D8s_v3</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>4 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">azr-dev-test-vm-01</span></td>
+                        <td>Standard_B2ms</td>
+                        <td><span class="tag development">Development</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>2 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">azr-prd-api-vm-01</span></td>
+                        <td>Standard_D4s_v3</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">azr-stg-app-vm-01</span></td>
+                        <td>Standard_D2s_v3</td>
+                        <td><span class="tag">Staging</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>3 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">azr-prd-backup-vm-01</span></td>
+                        <td>Standard_D4s_v3</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>2 min ago</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- GCP Section -->
+        <div class="cloud-section">
+            <div class="cloud-header">
+                <div class="cloud-icon gcp">G</div>
+                <h2>Google Cloud Platform</h2>
+                <span class="count">7 assets replicating</span>
+            </div>
+            <table class="assets-table">
+                <thead>
+                    <tr>
+                        <th>Asset Name</th>
+                        <th>Machine Type</th>
+                        <th>Environment</th>
+                        <th>Status</th>
+                        <th>Replication Progress</th>
+                        <th>Last Sync</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="asset-name">gcp-prd-web-inst-01</span></td>
+                        <td>n2-standard-4</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">gcp-prd-app-inst-01</span></td>
+                        <td>n2-highmem-8</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>2 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">gcp-prd-db-inst-01</span></td>
+                        <td>n2-highmem-16</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>3 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">gcp-prd-analytics-inst-01</span></td>
+                        <td>n2-standard-8</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">gcp-dev-build-inst-01</span></td>
+                        <td>n2-standard-2</td>
+                        <td><span class="tag development">Development</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>4 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">gcp-prd-cache-inst-01</span></td>
+                        <td>n2-standard-4</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>2 min ago</td>
+                    </tr>
+                    <tr>
+                        <td><span class="asset-name">gcp-prd-proxy-inst-01</span></td>
+                        <td>n2-standard-2</td>
+                        <td><span class="tag production">Production</span></td>
+                        <td>
+                            <span class="status-text">
+                                <span class="status-icon">✓</span>
+                                <span>Active</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </td>
+                        <td>1 min ago</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
